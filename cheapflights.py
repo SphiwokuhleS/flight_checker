@@ -5,8 +5,8 @@ import random
 import argparse
 import datetime
 from termcolor import colored
-from proxies import Scrapper, Proxy, ScrapperException
-from torrequest import TorRequest
+from proxie.proxies import Scrapper, Proxy, ScrapperException
+# from torrequest import TorRequest
 from rich.console import Console
 from rich.columns import Columns
 from rich.panel import Panel
@@ -138,10 +138,10 @@ def get_cheapest_flight():
                 'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
     }
 
-    proxies = {'https' : '139.162.41.219:8889'}
+    # proxies = {'https' : '139.162.41.219:8889'}
     # proxies = { 'http' : '192.109.165.221:80' }
 
-    # print(proxies)
+    proxies = proxy_list[random_proxy]
     now = datetime.datetime.now()
 
     request_session = requests.Session()
