@@ -5,8 +5,7 @@ import random
 import argparse
 import datetime
 from termcolor import colored
-from proxie.proxies import Scrapper, Proxy, ScrapperException
-# from torrequest import TorRequest
+from proxies.proxies import Scrapper, Proxy, ScrapperException
 from rich.console import Console
 from rich.columns import Columns
 from rich.panel import Panel
