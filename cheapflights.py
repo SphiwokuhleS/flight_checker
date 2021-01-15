@@ -19,10 +19,19 @@ import subprocess
 
 #flight = "<div class="bottom " >" for regex
 #20779
-with open('second.html', 'r') as data:
-    m = data.read()
+
+def dev_testing():
+    """
+    Function for tesing against downloadded html response
+    """
+    with open('second.html', 'r') as data:
+        m = data.read()
+    return m
 
 def check_connection():
+    """
+    Function to check if i'm conntected to the internet
+    """
     r = requests.get('https://www.google.com')
     if r.status_code == 200:
         print (colored("Connected.", 'green'))
@@ -30,45 +39,48 @@ def check_connection():
         print (colored("Not Connected.", 'red'))
 
 def check_proxy_status(proxy_ip):
+    """
+    Function to check if a proxy is live
+    Parameter:  proxy ip
+    """
     try:
         status = subprocess.check_output(["ping", "-c","1", proxy_ip]).decode('utf-8')
         if status.find("1 received") > -1:
             return True
     except subprocess.CalledProcessError as e:
         return False
-    # status = os.system(f"ping -c 1 {proxy_ip}")
 
     return False
     
 def get_data(data):
+    """
+    Get specific types of data to display on the flight cubes.
+    Parameter: data, the data to be queried
+    """
     depart = data[0].lstrip(" ")
     aiport_time = data[1].lstrip(" ")
-    # lands = data[2].lstrip(" ")
     duration = data[3].rstrip("<").lstrip(" ")
     return f"[b][yellow]{depart}[/b]\n[green]{aiport_time}\n{duration}"
 
 
 def get_flights(request_data):
+    """
+    Getting all the flights from the returned html data
+    """
     flight_data = []
     flights = re.findall('Provided\s\w+.+<', request_data)
 
     [flight_data.append(i.split(",")) for i in flights]
 
     console = Console()
-
-    # console.print(data, overflow='ignore', crop=False)
     user_render = [Panel(get_data(user), expand=False, title=f"FLIGHT",box=box.HEAVY_HEAD, border_style="pale_turquoise1") for user in flight_data]
     console.print(Columns(user_render))
-    
-    # for i in range(1, len(flight_data)):
-    #     print( "Flight :" + str(i))
-    #     for x in flight_data[i]:
-    #         print(x.strip(" ").rstrip("<"))
-    #     print("\n")
 
-# get_flights(m)
+
 def get_arguments():
-
+    """
+    Get program arguments
+    """
     parse = argparse.ArgumentParser(description="Let's test")
     # parse.add_argument("-y", "--year", dest="year", help="Year")
     parse.add_argument("-m", "--month", dest="month", help="Month")
@@ -81,6 +93,10 @@ def get_arguments():
 arguments = get_arguments()
 
 def ssl_proxies():
+    """
+    Using the proxy library to get http proxies.
+
+    """
     # Category = 'PROXYLIST_DOWNLOAD_HTTPS'
     Category = 'PROXYLIST_DOWNLOAD_HTTP'
 
@@ -101,9 +117,11 @@ def get_cheapest_flight():
     """
     This function will look for the cheapest flight from cheapflights.co.za,
     Function can still be upgraded to provide more information.
+    It will use a random proxy and user-agent to avoid being cought as a bot.
 
     Parameter:  month, day, from, to. 
     The one : <p\sid="\w+.+</p> 
+
     """
 
     user_agent = [
@@ -124,7 +142,7 @@ def get_cheapest_flight():
     # print(len(proxy_list))
     random_agent = random.randint(0, len(user_agent)-1)
     random_proxy = random.randint(0, len(proxy_list)-1)
-    print(random_proxy)
+
     headers = { 'User-agent' : user_agent[random_agent],
                 'Connection' : 'close',
                 'Upgrade-Insecure-Requests': '1',
@@ -138,31 +156,27 @@ def get_cheapest_flight():
                 'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
     }
 
-    # proxies = {'https' : '139.162.41.219:8889'}
-    # proxies = { 'http' : '192.109.165.221:80' }
+    if check_proxy_status:
+        proxies = proxy_list[random_proxy]
+        print("Using http proxy.")
+    else:
+        print("Proxy Down, using original ip.")
+        proxies = {}
 
-    proxies = proxy_list[random_proxy]
+
     now = datetime.datetime.now()
 
     request_session = requests.Session()
-    # print(request_session)
     flight_request_uri = f"https://www.cheapflights.co.za/flight-search/{arguments.cfrom}-{arguments.to}/{now.year}-{arguments.month}-{arguments.day}?sort=price_a"
 
-    print(colored(flight_request_uri, 'white'))
-
+    # print(colored(flight_request_uri, 'white')) the url.
     # print(len(request.text))
-
-    # request = request_session.get(flight_request_uri, headers=headers)
     request = request_session.get(flight_request_uri, headers=headers, proxies=proxies)
-    
 
     length = len(request.text)
     if request.text.find("""If you are seeing this page, it means that Cheapflights thinks you are a "bot," and the 
                             page you were trying to get to is only useful for humans.""") > -1 :
         print(colored('Ithi Uyi\'Robot Leshandis', 'red', attrs=['bold', 'blink']))
-
-    print(len(request.text))
-    # print(len(user_agent[random_agent]))
     
     cheapest = re.search("""Cheapest\n</\w+>\n</\w+>\n</\w+>\n</\w+>\n<\w+\s\w+="\w+\s\w+">\n<\w+\s\w+='\w+-\w+\s\w+-\
                             w+\s\w+\s\w+\s\w+\s\w+\s\w+'\n>\nR\d\s\d{3}\n|R\d{3}\n""", request.text)
@@ -173,24 +187,9 @@ def get_cheapest_flight():
     except AttributeError:
         return (colored("Something went wrong, Try again.", 'red'))
 
-
-# check_connection()
-# print(ssl_proxies())
 print(get_cheapest_flight())
 
-# proxies = ssl_proxies()
-# r = random.randint(0, len(proxies))
-# proxy = proxies[r]
-# print(proxy)
-# print(ssl_proxies())
-# proxy = {'https' : '79.104.25.218:8080'}
-# proxy = {'https' : '63.249.67.70:53281'}
-# proxy = {'https' : '139.162.41.219:8889'}
-# proxy = {'http' : '175.141.69.203:80'}
-
-
 # print(check_proxy_status("14.63.228.217"))
-print(check_proxy_status("175.141.69.203"))
 # proxies = proxies[r]
 # r = requests.get('https://httpbin.org/ip', proxies=proxy, timeout=20)
 # print(r.text)
